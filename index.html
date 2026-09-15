@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Formularios Girag</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1c2b3a">
+<style>
+  :root{
+    --ink:#eef1f6;
+    --ink-soft:#9aa7bd;
+    --paper:#0c1526;
+    --card:#141f36;
+    --card-2:#1a2744;
+    --line:#26314c;
+    --accent:#e8823f;
+    --accent-ink:#101826;
+    --ok:#4caf7d;
+    --err:#e2685f;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #17233d 0%, transparent 60%),
+      var(--paper);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;}
+
+  header.topbar{
+    padding:18px 20px 14px;
+    display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid var(--line);
+    background:transparent;
+    position:sticky;top:0;z-index:5;
+    backdrop-filter:blur(6px);
+  }
+  header.topbar h1{font-size:17px;margin:0;font-weight:600;letter-spacing:.2px;color:var(--ink);}
+  header.topbar .back{
+    background:none;border:none;color:var(--ink-soft);font-size:15px;padding:6px 4px;cursor:pointer;
+  }
+  .brand-logo{
+    height:38px; max-width:220px; object-fit:contain; display:block; margin-bottom:18px;
+  }
+  .brand-logo.small{ height:20px; margin-bottom:0; }
+  .mark-fallback{
+    font-size:26px;font-weight:800;letter-spacing:.04em;color:#fff;margin-bottom:18px;text-transform:uppercase;
+  }
+  .mark-fallback.small{ font-size:16px; margin-bottom:0; }
+  header.topbar .brand{ display:flex; align-items:center; gap:8px; }
+  header.topbar .spacer{width:40px;}
+
+  main{flex:1;padding:16px 20px 40px;}
+
+  /* --- Login --- */
+  .login-hero{padding:34px 4px 20px;}
+  .login-hero h2{font-size:15px;margin:14px 0 0;font-weight:500;color:var(--ink-soft);letter-spacing:.02em;}
+  .login-hero p{margin:14px 0 0;color:var(--ink-soft);font-size:14.5px;line-height:1.5;}
+
+  label{display:block;font-size:12px;color:var(--ink-soft);margin:18px 0 6px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+  input[type=text],input[type=url],input[type=password],select,textarea{
+    width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:var(--radius);
+    font-size:15px;background:var(--card);color:var(--ink);font-family:inherit;
+  }
+  textarea{min-height:90px;resize:vertical;}
+  input::placeholder, textarea::placeholder{color:#5c6a85;}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .hint{font-size:12.5px;color:#5c6a85;margin-top:6px;line-height:1.4;}
+
+  button.primary{
+    width:100%;padding:13px 16px;margin-top:24px;border:none;border-radius:var(--radius);
+    background:var(--accent);color:var(--accent-ink);font-size:15px;font-weight:700;cursor:pointer;
+    box-shadow:0 8px 20px rgba(232,130,63,.22);
+  }
+  button.primary:disabled{opacity:.5;box-shadow:none;}
+  button.ghost{
+    width:100%;padding:12px 16px;margin-top:10px;border:1px solid var(--line);border-radius:var(--radius);
+    background:transparent;color:var(--ink-soft);font-size:14px;font-weight:600;cursor:pointer;
+  }
+  .error-box{
+    margin-top:16px;padding:12px 14px;border-radius:var(--radius);background:rgba(226,104,95,.12);color:#f2a29b;
+    font-size:13.5px;line-height:1.4;border:1px solid rgba(226,104,95,.35);
+  }
+  .ok-box{
+    margin-top:16px;padding:12px 14px;border-radius:var(--radius);background:rgba(76,175,125,.12);color:#8fd6ae;
+    font-size:13.5px;line-height:1.4;border:1px solid rgba(76,175,125,.35);
+  }
+
+  /* --- Forms list --- */
+  .search-row{position:sticky;top:57px;background:var(--paper);padding:12px 0;z-index:4;}
+  .search-row input{width:100%;}
+  .cat-row{display:flex;gap:8px;overflow-x:auto;padding:2px 0 14px;margin:0 -2px;}
+  .cat-pill{
+    flex:0 0 auto;padding:7px 13px;border-radius:999px;border:1px solid var(--line);
+    background:var(--card);font-size:13px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;
+  }
+  .cat-pill.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700;}
+
+  .form-card{
+    display:flex;align-items:center;gap:12px;
+    padding:15px 14px;margin-bottom:10px;background:var(--card);
+    border:1px solid var(--line);border-radius:var(--radius);cursor:pointer;
+    text-align:left;width:100%;
+  }
+  .form-card .ic{
+    width:38px;height:38px;flex:0 0 38px;border-radius:9px;background:var(--card-2);
+    display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:700;font-size:15px;
+  }
+  .form-card .txt{flex:1;min-width:0;}
+  .form-card .txt .t{font-size:14.5px;font-weight:600;margin:0 0 2px;color:var(--ink);}
+  .form-card .txt .d{font-size:12.5px;color:var(--ink-soft);margin:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .form-card .chev{color:var(--ink-soft);font-size:16px;}
+
+  .empty-state{padding:60px 10px;text-align:center;color:var(--ink-soft);}
+  .empty-state .big{font-size:32px;margin-bottom:10px;}
+  .empty-state p{font-size:14px;line-height:1.5;margin:0;}
+
+  .skel{height:66px;border-radius:var(--radius);background:linear-gradient(90deg,#141f36,#1c2a4a,#141f36);
+    background-size:200% 100%;animation:sk 1.2s ease-in-out infinite;margin-bottom:10px;}
+  @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+  /* --- Question form --- */
+  .q-block{margin-bottom:4px;}
+  .q-block .q-label{font-size:14px;font-weight:600;margin:22px 0 7px;color:var(--ink);}
+  .q-block .q-req{color:var(--accent);margin-left:3px;}
+  .q-block .q-desc{font-size:12.5px;color:var(--ink-soft);margin:-3px 0 8px;}
+
+  /* --- Modo tarjeta por pregunta --- */
+  .progress-wrap{
+    height:3px;background:var(--line);margin:0 20px;border-radius:2px;overflow:hidden;
+  }
+  .progress-bar{
+    height:100%;background:var(--accent);border-radius:2px;
+    transition:width .25s ease;
+  }
+  .q-stage{
+    padding:calc(6vh + 10px) 20px 24px;
+  }
+  .q-card{
+    width:100%;background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:24px 20px;box-shadow:0 12px 30px rgba(0,0,0,.28);
+    animation:cardIn .22s ease;
+  }
+  @keyframes cardIn{
+    from{opacity:0;transform:translateY(10px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  .q-card .section-title{margin:0 0 14px;}
+  .q-label.big{font-size:18px;font-weight:700;margin:0 0 8px;line-height:1.35;}
+  .q-card .q-desc{margin:0 0 16px;font-size:13px;}
+
+  .card-nav{
+    position:sticky;bottom:0;background:var(--paper);
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:14px 20px calc(18px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--line);
+  }
+  .nav-hint{font-size:12px;color:var(--ink-soft);flex:1;text-align:center;}
+  .nav-arrow{
+    width:52px;height:52px;border-radius:50%;border:none;flex:0 0 auto;
+    font-size:22px;font-weight:700;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .nav-arrow.left{background:var(--card-2);color:var(--ink);border:1px solid var(--line);}
+  .nav-arrow.left.disabled, .nav-arrow.left:disabled{opacity:.35;cursor:default;}
+  .nav-arrow.right{
+    background:var(--accent);color:var(--accent-ink);
+    box-shadow:0 8px 20px rgba(232,130,63,.35);
+  }
+  .nav-arrow.right:disabled{opacity:.6;}
+  .section-title{
+    font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);
+    margin:30px 0 4px;font-weight:700;
+  }
+  .section-title:first-child{margin-top:6px;}
+  .radio-row,.check-row{display:flex;align-items:center;gap:9px;padding:9px 0;font-size:14.5px;color:var(--ink);}
+  .radio-row input,.check-row input{width:auto;accent-color:var(--accent);}
+
+  footer.action-bar{
+    position:sticky;bottom:0;background:var(--paper);
+    padding:14px 20px calc(14px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--line);
+  }
+
+  .banner{
+    padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:14px;
+  }
+  .banner.demo{background:rgba(232,130,63,.12);color:#f0b784;border:1px solid rgba(232,130,63,.35);}
+
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
+    background:var(--card-2);color:var(--ink);padding:11px 18px;border-radius:999px;font-size:13.5px;
+    box-shadow:0 6px 18px rgba(0,0,0,.4);z-index:50;max-width:88%;text-align:center;
+    border:1px solid var(--line);
+  }
+
+  .settings-link{
+    text-align:center;margin-top:26px;font-size:12.5px;color:var(--ink-soft);background:none;border:none;
+    text-decoration:underline;cursor:pointer;width:100%;
+  }
+  a.plain{color:inherit;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* =========================================================================
+   Formularios Girag — cliente ligero para GLPI + plugin Formcreator
+   -------------------------------------------------------------------------
+   Qué hace:
+   - Inicia sesión contra la API REST de GLPI (App-Token + usuario/contraseña)
+   - Lista los formularios de Formcreator disponibles
+   - Renderiza cada formulario dinámicamente según sus preguntas
+   - Envía la respuesta como PluginFormcreatorFormAnswer (crea el ticket)
+
+   Notas importantes para quien continúe el desarrollo:
+   - Los nombres exactos de endpoints/campos pueden variar levemente según
+     la versión de GLPI y de Formcreator instaladas en el servidor de Girag.
+     Los usados aquí están documentados en el foro oficial de GLPI y en el
+     código fuente del plugin, pero se recomienda validarlos contra el
+     servidor real antes de pasar a producción (hay un "Modo diagnóstico"
+     más abajo para inspeccionar las respuestas crudas de la API).
+   - Hay un "Modo demo" con datos de ejemplo para probar la interfaz sin
+     necesidad de un servidor real.
+   ========================================================================= */
+
+const STORAGE_KEY = 'girag_glpi_conn';
+const state = {
+  screen: 'login',      // login | profile | list | form | settings
+  conn: null,            // {url, appToken, username, password, profileId}
+  sessionToken: null,
+  profiles: [],
+  currentUserId: null,
+  forms: [],
+  categories: [],
+  activeCategory: null,
+  search: '',
+  loadingForms: false,
+  currentForm: null,     // {id, name, sections:[{name, questions:[...]}]}
+  qIndex: 0,              // índice de la pregunta actual (una tarjeta por pregunta)
+  loadingForm: false,
+  answers: {},
+  submitting: false,
+  error: null,
+  toast: null,
+  demoMode: false,
+};
+
+function loadConn(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function saveConn(conn){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(conn));
+}
+function clearConn(){
+  localStorage.removeItem(STORAGE_KEY);
+}
+
+/* ---------------------------- API layer -------------------------------- */
+
+async function apiFetch(conn, path, opts={}){
+  let url = conn.url.replace(/\/$/,'') + '/apirest.php' + path;
+  if (opts.debug){
+    url += (url.includes('?') ? '&' : '?') + 'debug';
+  }
+  const headers = Object.assign({
+    'Content-Type': 'application/json',
+    'App-Token': conn.appToken,
+  }, opts.headers || {});
+  if (state.sessionToken) headers['Session-Token'] = state.sessionToken;
+
+  const res = await fetch(url, Object.assign({}, opts, { headers }));
+  // Leemos el texto crudo primero: si la respuesta no es JSON válido (por
+  // ejemplo, porque el servidor mezcló un warning/error de PHP con el JSON),
+  // igual queremos ver ese texto para diagnosticar, en vez de perderlo.
+  const rawText = await res.text();
+  let body = null;
+  try{ body = JSON.parse(rawText); }catch(e){ /* no era JSON válido */ }
+
+  if (!res.ok){
+    console.error('apiFetch error en ' + path + ' — respuesta cruda del servidor:\n' + rawText);
+    let msg;
+    if (body){
+      msg = Array.isArray(body) ? body.join(' — ') : (body && body.message) || res.statusText;
+    } else {
+      // No fue JSON válido: mostramos un fragmento del texto crudo para
+      // que el mensaje de error mismo dé una pista, sin depender de la consola.
+      msg = 'Respuesta no válida del servidor (HTTP ' + res.status + '): ' +
+        (rawText ? rawText.slice(0, 300) : '(respuesta vacía)');
+    }
+    throw new Error(msg);
+  }
+
+  // La respuesta vino "ok" (2xx) pero el cuerpo no se pudo leer como JSON.
+  // Esto no debería pasar en un envío exitoso normal — lo tratamos como
+  // fallo también, y mostramos el texto crudo para diagnosticar, en vez de
+  // devolver 'null' en silencio (lo que antes se malinterpretaba como éxito).
+  if (body === null && rawText && rawText.trim() !== ''){
+    console.error('apiFetch: respuesta 2xx pero no es JSON válido en ' + path + ' — texto crudo:\n' + rawText);
+    throw new Error('Respuesta 2xx no válida como JSON: ' + rawText.slice(0, 300));
+  }
+
+  return body;
+}
+
+async function initSession(conn){
+  const basic = btoa(unescape(encodeURIComponent(conn.username + ':' + conn.password)));
+  const body = await apiFetch(conn, '/initSession', {
+    method: 'GET',
+    headers: { 'Authorization': 'Basic ' + basic }
+  });
+  if (body && body.session_token){
+    state.sessionToken = body.session_token;
+  }
+  // GLPI puede devolver el id del usuario autenticado en la sesión;
+  // si no viene aquí, se completa después con getMyProfiles/getFullSession.
+  if (body && body.session && body.session.glpiID){
+    state.currentUserId = body.session.glpiID;
+  }
+  return body.session_token;
+}
+
+async function fetchMyProfiles(conn){
+  const body = await apiFetch(conn, '/getMyProfiles');
+  const list = (body && body.myprofiles) || [];
+  return list.map(p => ({ id: p.id, name: p.name }));
+}
+
+async function changeActiveProfile(conn, profilesId){
+  return apiFetch(conn, '/changeActiveProfile', {
+    method: 'POST',
+    body: JSON.stringify({ profiles_id: profilesId })
+  });
+}
+
+async function ensureCurrentUserId(conn){
+  if (state.currentUserId) return;
+  try{
+    const body = await apiFetch(conn, '/getFullSession');
+    const s = body && body.session;
+    if (s && s.glpiID) state.currentUserId = s.glpiID;
+  }catch(e){ /* si falla, se envía sin requester_id */ }
+}
+
+async function fetchForms(conn){
+  // Lista de formularios de Formcreator visibles para el usuario
+  const body = await apiFetch(conn, '/PluginFormcreatorForm?range=0-200');
+  return Array.isArray(body) ? body : (body.data || []);
+}
+
+async function fetchFormDetail(conn, formId){
+  // Trae secciones y preguntas del formulario. Se filtra client-side
+  // porque el filtrado server-side de items de plugin varía por versión.
+  const [sections, questions] = await Promise.all([
+    apiFetch(conn, '/PluginFormcreatorSection?range=0-200'),
+    apiFetch(conn, '/PluginFormcreatorQuestion?range=0-500'),
+  ]);
+  const secArr = Array.isArray(sections) ? sections : (sections.data || []);
+  const qArr = Array.isArray(questions) ? questions : (questions.data || []);
+
+  const mySections = secArr
+    .filter(s => String(s.plugin_formcreator_forms_id) === String(formId))
+    .sort((a,b) => (a.order||0) - (b.order||0));
+
+  return mySections.map(s => ({
+    id: s.id,
+    name: s.name,
+    questions: qArr
+      .filter(q => String(q.plugin_formcreator_sections_id) === String(s.id))
+      .sort((a,b) => (a.order||0) - (b.order||0)),
+  }));
+}
+
+async function submitFormAnswer(conn, formId, answers, formName){
+  // Convención de Formcreator: cada respuesta va como formcreator_field_<id>
+  // Además de las respuestas, Formcreator suele requerir 'name' y el id del
+  // usuario que solicita (requester_id) para poder guardar la respuesta.
+  // Confirmado contra el servidor real: funciona con texto simple, con
+  // campos 'glpiselect' (Objeto GLPI) y con checkboxes — siempre que estos
+  // últimos se envíen como arreglo real, no como texto separado por comas.
+  const input = {
+    plugin_formcreator_forms_id: formId,
+    name: formName || ('Respuesta ' + new Date().toISOString()),
+  };
+  if (state.currentUserId) input.requester_id = state.currentUserId;
+  Object.keys(answers).forEach(qid => {
+    input['formcreator_field_' + qid] = answers[qid];
+  });
+  // IMPORTANTE: sin 'debug' aquí. Con debug activado, GLPI puede devolver
+  // la página HTML de documentación en vez de JSON limpio incluso en un
+  // envío exitoso — eso hacía que la app no pudiera leer el id real y, aun
+  // así, no lanzara error (falso positivo de "éxito").
+  const result = await apiFetch(conn, '/PluginFormcreatorFormAnswer', {
+    method: 'POST',
+    body: JSON.stringify({ input })
+  });
+
+  // Verificación estricta: solo se considera éxito real si vino un id
+  // válido. Si no, tratamos esto como un fallo (para que submitForm caiga
+  // al respaldo de Ticket en vez de reportar un éxito falso).
+  const id = result && (result.id || (Array.isArray(result) && result[0] && result[0].id));
+  if (!id){
+    console.error('submitFormAnswer: respuesta sin id válido, se trata como fallo:', JSON.stringify(result));
+    throw new Error('La respuesta del servidor no incluyó un id válido');
+  }
+  return result;
+}
+
+async function submitForm(conn, form, answers){
+  // Intenta primero la vía "real" de Formcreator (queda enlazada
+  // correctamente cuando funciona). Si falla, usa el Ticket nativo como
+  // respaldo para no perder el envío del usuario.
+  try{
+    const result = await submitFormAnswer(conn, form.id, answers, form.name);
+    return { mode: 'formcreator', result };
+  }catch(e){
+    console.warn('Falló el envío directo a Formcreator, se usa Ticket nativo como respaldo:', e.message);
+    const result = await submitAsTicket(conn, form, answers);
+    return { mode: 'ticket', result };
+  }
+}
+
+function buildTicketContentHtml(sections, answers){
+  // Arma el contenido del ticket como HTML simple: una línea por pregunta
+  // respondida, en el mismo orden en que aparecen en el formulario.
+  const lines = [];
+  sections.forEach(sec=>{
+    sec.questions.forEach(q=>{
+      const ans = answers[q.id];
+      if (ans === undefined || ans === null || ans === '' ||
+          (Array.isArray(ans) && ans.length === 0)) return;
+      const label = stripTags(q.name);
+      const value = Array.isArray(ans) ? ans.join(', ') : String(ans);
+      lines.push('<p><strong>' + label + ':</strong> ' + value + '</p>');
+    });
+  });
+  return lines.join('\n') || '<p>(Formulario enviado sin respuestas)</p>';
+}
+
+async function submitAsTicket(conn, form, answers){
+  // Crea un Ticket nativo de GLPI con la información del formulario. Se usa
+  // como respaldo cuando submitFormAnswer (la vía real de Formcreator) falla
+  // — ver submitForm(), que intenta primero la vía de Formcreator.
+  const input = {
+    name: form.name,
+    content: buildTicketContentHtml(form.sections, answers),
+  };
+  if (state.currentUserId) input._users_id_requester = state.currentUserId;
+  if (form.itilCategoryId) input.itilcategories_id = form.itilCategoryId;
+
+  const result = await apiFetch(conn, '/Ticket', {
+    method: 'POST',
+    body: JSON.stringify({ input })
+  });
+
+  const id = result && (result.id || (Array.isArray(result) && result[0] && result[0].id));
+  if (!id){
+    console.error('submitAsTicket: respuesta sin id válido:', JSON.stringify(result));
+    throw new Error('La respuesta del servidor no incluyó un id válido');
+  }
+  return result;
+}
+
+/* ------------------------------ Demo data -------------------------------- */
+
+const DEMO_FORMS = [
+  { id:'d1', name:'Reporte de incidencia', description:'Falla en un equipo o servicio', category:'Soporte' },
+  { id:'d2', name:'Solicitud de equipo nuevo', description:'Pedir un dispositivo o periférico', category:'Solicitudes' },
+  { id:'d3', name:'Alta de usuario', description:'Crear acceso para un nuevo colaborador', category:'Accesos' },
+  { id:'d4', name:'Solicitud de VPN', description:'Acceso remoto a la red de Girag', category:'Accesos' },
+];
+const DEMO_DETAIL = {
+  d1: [{ id:'s1', name:'Detalle de la incidencia', questions:[
+      { id:'q1', name:'Título', fieldtype:'text', required:1 },
+      { id:'q2', name:'Descripción', fieldtype:'textarea', required:1 },
+      { id:'q3', name:'Urgencia', fieldtype:'select', values:'Baja\nMedia\nAlta\nCrítica', required:1 },
+      { id:'q4', name:'Área afectada', fieldtype:'select', values:'Soporte\nRedes\nDesarrollo\nAdministración', required:0 },
+  ]}],
+};
+
+/* -------------------------------- Render --------------------------------- */
+
+const root = document.getElementById('app');
+function toast(msg){ state.toast = msg; render(); setTimeout(()=>{ state.toast=null; render(); }, 2600); }
+
+function render(){
+  root.innerHTML = '';
+  if (state.screen === 'login') root.appendChild(renderLogin());
+  else if (state.screen === 'profile') root.appendChild(renderProfilePicker());
+  else if (state.screen === 'list') root.appendChild(renderList());
+  else if (state.screen === 'form') root.appendChild(renderForm());
+  if (state.toast){
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = state.toast;
+    root.appendChild(t);
+  }
+}
+
+function el(tag, attrs={}, children=[]){
+  const e = document.createElement(tag);
+  Object.entries(attrs).forEach(([k,v])=>{
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+    else if (v !== null && v !== undefined) e.setAttribute(k, v);
+  });
+  (Array.isArray(children)?children:[children]).forEach(c=>{
+    if (c === null || c === undefined) return;
+    e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  });
+  return e;
+}
+
+function renderProfilePicker(){
+  const w = el('div', {});
+  w.appendChild(el('header', {class:'topbar'}, [
+    el('span', {class:'spacer'}),
+    el('h1', {}, 'Elige un perfil'),
+    el('span', {class:'spacer'}),
+  ]));
+  const main = el('main', {}, [
+    el('div', {class:'login-hero'}, [
+      el('p', {}, 'Tu usuario tiene varios perfiles en GLPI. Elige con cuál quieres que trabaje la app (esto define qué puede leer y crear).'),
+    ])
+  ]);
+
+  state.profiles.forEach(p=>{
+    const card = el('button', {class:'form-card', type:'button', onclick: ()=>chooseProfile(p)}, [
+      el('div', {class:'ic'}, p.name.trim().charAt(0).toUpperCase()),
+      el('div', {class:'txt'}, [ el('p', {class:'t'}, p.name) ]),
+      el('div', {class:'chev'}, '›'),
+    ]);
+    main.appendChild(card);
+  });
+
+  w.appendChild(main);
+  return w;
+}
+
+async function chooseProfile(p){
+  try{
+    await changeActiveProfile(state.conn, p.id);
+    state.conn.profileId = p.id;
+    state.conn.profileName = p.name;
+    saveConn(state.conn);
+    toast('Usando perfil: ' + p.name);
+  }catch(e){
+    toast('No se pudo cambiar de perfil: ' + e.message);
+  }
+  await goToList();
+}
+
+function renderLogin(){
+  const wrap = document.createDocumentFragment();
+  const main = el('main', {}, [
+    el('div', {class:'login-hero'}, [
+      el('div', {class:'wordmark'}, ['GIRAG']),
+      el('h2', {}, 'Formularios de soporte'),
+      el('p', {}, 'Conecta con tu GLPI para ver y enviar los formularios de soporte desde el celular.'),
+    ])
+  ]);
+
+  const form = el('form', {});
+  const urlInput = el('input', {type:'url', placeholder:'https://tu-servidor/glpi', required:'true', value: (state.conn&&state.conn.url)||''});
+  const appTokenInput = el('input', {type:'text', placeholder:'App-Token del cliente de API', required:'true', value:(state.conn&&state.conn.appToken)||''});
+  const usernameInput = el('input', {type:'text', placeholder:'Usuario de GLPI', required:'true', autocomplete:'username', value:(state.conn&&state.conn.username)||''});
+  const passwordInput = el('input', {type:'password', placeholder:'Contraseña de GLPI', required:'true', autocomplete:'current-password'});
+
+  form.appendChild(el('label', {}, 'URL del servidor GLPI'));
+  form.appendChild(urlInput);
+  form.appendChild(el('div', {class:'hint'}, 'Ej: https://soporte.girag.com/glpi'));
+
+  form.appendChild(el('label', {}, 'App-Token'));
+  form.appendChild(appTokenInput);
+  form.appendChild(el('div', {class:'hint'}, 'Configuración > General > API > tu cliente de API'));
+
+  form.appendChild(el('label', {}, 'Usuario'));
+  form.appendChild(usernameInput);
+  form.appendChild(el('div', {class:'hint'}, 'El mismo usuario con el que entras a GLPI desde el navegador'));
+
+  form.appendChild(el('label', {}, 'Contraseña'));
+  form.appendChild(passwordInput);
+
+  const submitBtn = el('button', {class:'primary', type:'submit'}, state.loadingForms ? 'Conectando…' : 'Conectar');
+  submitBtn.disabled = !!state.loadingForms;
+  form.appendChild(submitBtn);
+
+  if (state.error){
+    form.appendChild(el('div', {class:'error-box'}, state.error));
+  }
+
+  form.addEventListener('submit', async (ev)=>{
+    ev.preventDefault();
+    state.error = null;
+    const conn = { url: urlInput.value.trim(), appToken: appTokenInput.value.trim(), username: usernameInput.value.trim(), password: passwordInput.value };
+    state.loadingForms = true; render();
+    try{
+      state.sessionToken = await initSession(conn);
+      state.conn = conn;
+      saveConn(conn);
+      state.demoMode = false;
+      await ensureCurrentUserId(conn);
+      const asked = await resolveProfile(conn, false);
+      if (asked === 'asked') { state.loadingForms = false; return; }
+      await goToList();
+    }catch(e){
+      state.error = 'No se pudo conectar: ' + e.message + '. Revisa la URL, el App-Token y que la API esté habilitada en GLPI.';
+      state.loadingForms = false;
+      render();
+    }
+  });
+
+  main.appendChild(form);
+  main.appendChild(el('button', {class:'ghost', type:'button', onclick: async ()=>{
+    state.demoMode = true; state.error = null; await goToList();
+  }}, 'Probar con datos de ejemplo (modo demo)'));
+
+  wrap.appendChild(el('header', {class:'topbar'}, [ el('div',{class:'spacer'}), el('h1', {}, ''), el('div',{class:'spacer'}) ]));
+  wrap.appendChild(main);
+  const w = el('div', {}, []);
+  w.appendChild(wrap);
+  return w;
+}
+
+async function resolveProfile(conn, forceShowPicker){
+  let list = [];
+  try{ list = await fetchMyProfiles(conn); }catch(e){ /* si falla, seguimos con el perfil por defecto */ }
+  state.profiles = list;
+
+  if (list.length <= 1) return; // no hay nada que elegir
+
+  if (!forceShowPicker && conn.profileId){
+    // Ya se había elegido un perfil antes: lo reaplicamos en silencio.
+    try{ await changeActiveProfile(conn, conn.profileId); }
+    catch(e){ /* si falla, se sigue con el perfil activo por defecto */ }
+    return;
+  }
+
+  // Varios perfiles y ninguno elegido todavía: preguntamos.
+  state.screen = 'profile';
+  render();
+  return 'asked';
+}
+
+async function goToList(){
+  state.loadingForms = true; state.error = null; render();
+  try{
+    if (state.demoMode){
+      state.forms = DEMO_FORMS;
+    } else {
+      const raw = await fetchForms(state.conn);
+      state.forms = raw.map(f => ({
+        id: f.id, name: f.name, description: f.description || f.content || '',
+        category: (f.plugin_formcreator_categories_id_name) || 'General',
+        // Categoría de TICKET (ITILCategory) que el formulario tenga configurada
+        // como destino, si el servidor la expone en este campo. Puede no venir
+        // según la versión de Formcreator — en ese caso el ticket queda sin
+        // categoría y hay que asignarla manualmente después.
+        itilCategoryId: f.itilcategories_id || null,
+      }));
+    }
+    state.categories = Array.from(new Set(state.forms.map(f=>f.category || 'General')));
+    state.screen = 'list';
+  }catch(e){
+    state.error = 'No se pudieron cargar los formularios: ' + e.message;
+    state.screen = 'login';
+  }
+  state.loadingForms = false;
+  render();
+}
+
+function renderList(){
+  const w = el('div', {});
+  w.appendChild(el('header', {class:'topbar'}, [
+    el('span', {class:'spacer'}),
+    el('h1', {class:'brand'}, [
+      el('span', {class:'mark-fallback small'}, 'GIRAG'),
+      el('span', {style:'color:var(--ink-soft);font-weight:400;'}, ' · Formularios'),
+    ]),
+    el('button', {class:'back', onclick: ()=>{ openSettings(); }}, '⋯'),
+  ]));
+
+  const main = el('main', {});
+
+  if (state.demoMode){
+    main.appendChild(el('div', {class:'banner demo'}, 'Modo demo — estás viendo datos de ejemplo, no tu GLPI real.'));
+  }
+
+  const searchRow = el('div', {class:'search-row'});
+  const searchInput = el('input', {type:'text', placeholder:'Buscar formulario…', value: state.search});
+  searchInput.addEventListener('input', (e)=>{ state.search = e.target.value; renderListBody(main, listBody); });
+  searchRow.appendChild(searchInput);
+  main.appendChild(searchRow);
+
+  if (state.categories.length > 1){
+    const catRow = el('div', {class:'cat-row'});
+    catRow.appendChild(el('button', {class:'cat-pill' + (state.activeCategory===null?' active':''), onclick:()=>{ state.activeCategory=null; renderListBody(main, listBody); }}, 'Todos'));
+    state.categories.forEach(c=>{
+      catRow.appendChild(el('button', {class:'cat-pill' + (state.activeCategory===c?' active':''), onclick:()=>{ state.activeCategory=c; renderListBody(main, listBody); }}, c));
+    });
+    main.appendChild(catRow);
+  }
+
+  const listBody = el('div', {});
+  main.appendChild(listBody);
+  renderListBody(main, listBody);
+
+  main.appendChild(el('button', {class:'ghost', type:'button', style:'margin-top:24px;', onclick: logout}, 'Cerrar sesión'));
+
+  w.appendChild(main);
+  return w;
+}
+
+function renderListBody(main, listBody){
+  listBody.innerHTML = '';
+  if (state.loadingForms){
+    for (let i=0;i<4;i++) listBody.appendChild(el('div', {class:'skel'}));
+    return;
+  }
+  let items = state.forms;
+  if (state.activeCategory) items = items.filter(f => (f.category||'General') === state.activeCategory);
+  if (state.search.trim()) {
+    const q = state.search.trim().toLowerCase();
+    items = items.filter(f => f.name.toLowerCase().includes(q));
+  }
+  if (items.length === 0){
+    listBody.appendChild(el('div', {class:'empty-state'}, [
+      el('div', {class:'big'}, '🔍'),
+      el('p', {}, 'No hay formularios que coincidan con tu búsqueda.'),
+    ]));
+    return;
+  }
+  items.forEach(f=>{
+    const card = el('button', {class:'form-card', type:'button', onclick: ()=>openForm(f)}, [
+      el('div', {class:'ic'}, f.name.trim().charAt(0).toUpperCase()),
+      el('div', {class:'txt'}, [
+        el('p', {class:'t'}, f.name),
+        el('p', {class:'d'}, stripTags(f.description) || 'Sin descripción'),
+      ]),
+      el('div', {class:'chev'}, '›'),
+    ]);
+    listBody.appendChild(card);
+  });
+}
+
+async function openForm(f){
+  state.currentForm = { id: f.id, name: f.name, sections: [], itilCategoryId: f.itilCategoryId || null };
+  state.answers = {};
+  state.qIndex = 0;
+  state.loadingForm = true;
+  state.screen = 'form';
+  render();
+  try{
+    state.currentForm.sections = state.demoMode ? (DEMO_DETAIL[f.id] || []) : await fetchFormDetail(state.conn, f.id);
+  }catch(e){
+    toast('No se pudo cargar el formulario: ' + e.message);
+    state.screen = 'list';
+  }
+  state.loadingForm = false;
+  render();
+}
+
+function decodeEntities(str){
+  // Decodifica entidades HTML (&#60; -> <, &amp; -> &, etc.)
+  if (!str) return '';
+  const txt = document.createElement('textarea');
+  txt.innerHTML = str;
+  return txt.value;
+}
+
+function stripTags(html){
+  // Quita etiquetas HTML dejando solo el texto plano (para descripciones)
+  const div = document.createElement('div');
+  div.innerHTML = decodeEntities(html || '');
+  return div.textContent || div.innerText || '';
+}
+
+function parseOptionList(raw){
+  // Formcreator puede guardar las opciones como:
+  //  - JSON: ["Opción 1","Opción 2"]  (formato moderno)
+  //  - texto separado por saltos de línea (formato clásico)
+  if (!raw) return [];
+  const decoded = decodeEntities(String(raw)).trim();
+  if (decoded.startsWith('[')){
+    try{
+      const arr = JSON.parse(decoded);
+      if (Array.isArray(arr)) return arr.map(String);
+    }catch(e){ /* no era JSON válido, sigue con el fallback */ }
+  }
+  return decoded.split('\n').map(s=>s.trim()).filter(Boolean);
+}
+
+// Mapa de tipos de pregunta de Formcreator que apuntan a objetos reales
+// de GLPI (no a una lista de texto fija). La clave es el fieldtype tal
+// como lo reporta la API; el valor es el itemtype de GLPI a consultar.
+// NOTA para quien continúe el desarrollo: esta lista cubre los tipos más
+// comunes, pero conviene confirmarla contra los fieldtypes reales que use
+// Formcreator en la versión instalada en Girag (puede variar el nombre
+// exacto, ej. 'requester' vs 'actor').
+const LINKED_ITEMTYPE_BY_FIELDTYPE = {
+  location: 'Location',
+  requester: 'User',
+  watcher: 'User',
+  assign_user: 'User',
+  user: 'User',
+  usergroups: 'Group',
+  assign_group: 'Group',
+  group: 'Group',
+  itilcategory: 'ITILCategory',
+  category: 'ITILCategory',
+  computer: 'Computer',
+  supplier: 'Supplier',
+};
+
+function looksLikeLinkedItemConfig(raw){
+  // Config de un selector de objeto GLPI: JSON *objeto* (no array),
+  // ej. {"show_tree_depth":"0","entity_restrict":2,...}
+  if (!raw) return false;
+  const decoded = decodeEntities(String(raw)).trim();
+  if (!decoded.startsWith('{')) return false;
+  try{
+    const obj = JSON.parse(decoded);
+    return obj && typeof obj === 'object' && !Array.isArray(obj);
+  }catch(e){ return false; }
+}
+
+async function fetchLinkedItems(conn, itemtype){
+  const body = await apiFetch(conn, '/' + itemtype + '?range=0-200');
+  const arr = Array.isArray(body) ? body : (body.data || []);
+  return arr.map(it => ({ id: it.id, label: it.completename || it.name || ('#'+it.id) }));
+}
+
+function guessItemtypeFromLabel(label){
+  // Respaldo cuando el servidor no indica el itemtype explícitamente:
+  // se adivina por palabras clave en el título de la pregunta.
+  const l = (label || '').toLowerCase();
+  if (l.includes('ubicaci')) return 'Location';
+  if (l.includes('equipo') || l.includes('computador') || l.includes('pc')) return 'Computer';
+  if (l.includes('usuario') || l.includes('solicitante') || l.includes('responsable')) return 'User';
+  if (l.includes('grupo')) return 'Group';
+  if (l.includes('categor')) return 'ITILCategory';
+  if (l.includes('proveedor')) return 'Supplier';
+  return null; // no se pudo adivinar
+}
+
+function renderLinkedItemSelect(q, itemtype){
+  const set = (val) => { state.answers[q.id] = val; };
+  const s = el('select', {});
+  s.appendChild(el('option', {value:''}, 'Cargando…'));
+  s.disabled = true;
+
+  if (!itemtype || state.demoMode){
+    // No se pudo determinar qué tipo de objeto de GLPI es, o estamos en
+    // modo demo sin servidor real: se deja como texto libre para no
+    // bloquear el envío, pero lo ideal es completar LINKED_ITEMTYPE_BY_FIELDTYPE.
+    const i = el('input', {type:'text', placeholder: itemtype ? ('Ej: nombre de ' + itemtype) : 'Escribe el valor'});
+    i.addEventListener('input', e=>set(e.target.value));
+    return i;
+  }
+
+  fetchLinkedItems(state.conn, itemtype).then(items=>{
+    s.innerHTML = '';
+    s.disabled = false;
+    s.appendChild(el('option', {value:''}, 'Selecciona…'));
+    items.forEach(it=> s.appendChild(el('option', {value:it.id}, it.label)));
+    s.addEventListener('change', e=>set(e.target.value));
+    if (items.length === 0){
+      s.appendChild(el('option', {value:'', disabled:'true'}, '(' + itemtype + ' no devolvió resultados)'));
+    }
+  }).catch(err=>{
+    s.innerHTML = '';
+    s.disabled = false;
+    // Mostramos el error real (no uno genérico) para poder diagnosticar:
+    // suele ser CORS (archivo abierto con file://, o dominio distinto sin
+    // CORS habilitado en el servidor) o falta de permisos sobre ese itemtype.
+    s.appendChild(el('option', {value:''}, 'Error cargando ' + itemtype + ': ' + err.message));
+    console.error('Error cargando ' + itemtype + ':', err);
+  });
+
+  return s;
+}
+
+function renderQuestionInput(q){
+  const type = (q.fieldtype || 'text').toLowerCase();
+  const set = (val) => { state.answers[q.id] = val; };
+
+  // Campos que apuntan a objetos reales de GLPI (ubicación, equipo, usuario...)
+  // 'glpiselect' es el tipo confirmado en el código fuente de Formcreator
+  // (clase GlpiselectField) para este tipo de selector.
+  const linkedType = q.itemtype || LINKED_ITEMTYPE_BY_FIELDTYPE[type];
+  if (type === 'glpiselect' || linkedType || looksLikeLinkedItemConfig(q.values)){
+    return renderLinkedItemSelect(q, linkedType || guessItemtypeFromLabel(q.name));
+  }
+
+  if (type === 'textarea'){
+    const t = el('textarea', {});
+    t.addEventListener('input', e=>set(e.target.value));
+    return t;
+  }
+  if (type === 'select' || type === 'dropdown'){
+    const options = parseOptionList(q.values);
+    const s = el('select', {});
+    s.appendChild(el('option', {value:''}, 'Selecciona…'));
+    options.forEach(o=> s.appendChild(el('option', {value:o}, o)));
+    s.addEventListener('change', e=>set(e.target.value));
+    return s;
+  }
+  if (type === 'radios' || type === 'radio'){
+    const options = parseOptionList(q.values);
+    const box = el('div', {});
+    options.forEach((o,i)=>{
+      const row = el('label', {class:'radio-row'});
+      const r = el('input', {type:'radio', name:'q_'+q.id, value:o});
+      r.addEventListener('change', ()=>set(o));
+      row.appendChild(r); row.appendChild(document.createTextNode(o));
+      box.appendChild(row);
+    });
+    return box;
+  }
+  if (type === 'checkboxes' || type === 'checkbox'){
+    const options = parseOptionList(q.values);
+    const box = el('div', {});
+    const selected = new Set();
+    options.forEach(o=>{
+      const row = el('label', {class:'check-row'});
+      const c = el('input', {type:'checkbox', value:o});
+      c.addEventListener('change', (e)=>{
+        if (e.target.checked) selected.add(o); else selected.delete(o);
+        // Formcreator espera un arreglo real de valores seleccionados para
+        // preguntas tipo checkbox (como al enviar el formulario HTML nativo
+        // con varios <input type=checkbox> del mismo nombre), no un texto
+        // separado por comas.
+        set(Array.from(selected));
+      });
+      row.appendChild(c); row.appendChild(document.createTextNode(o));
+      box.appendChild(row);
+    });
+    return box;
+  }
+  if (type === 'date'){
+    const i = el('input', {type:'text', placeholder:'AAAA-MM-DD'});
+    i.addEventListener('input', e=>set(e.target.value));
+    return i;
+  }
+  if (type === 'integer' || type === 'number'){
+    const i = el('input', {type:'text', inputmode:'numeric', placeholder:'0'});
+    i.addEventListener('input', e=>set(e.target.value));
+    return i;
+  }
+  // fallback: texto simple
+  const i = el('input', {type:'text'});
+  i.addEventListener('input', e=>set(e.target.value));
+  return i;
+}
+
+function flattenQuestions(sections){
+  // Convierte secciones+preguntas en una sola lista ordenada, conservando
+  // a qué sección pertenece cada pregunta (para mostrarla como encabezado).
+  const flat = [];
+  sections.forEach(sec=>{
+    sec.questions.forEach((q, i)=>{
+      flat.push({ q, sectionName: sec.name, isFirstOfSection: i === 0 });
+    });
+  });
+  return flat;
+}
+
+function isAnswerEmpty(ans){
+  return ans === undefined || ans === null || ans === '' ||
+    (Array.isArray(ans) && ans.length === 0);
+}
+
+function renderForm(){
+  const w = el('div', {});
+
+  if (state.loadingForm){
+    w.appendChild(el('header', {class:'topbar'}, [
+      el('button', {class:'back', onclick: ()=>{ state.screen='list'; render(); }}, '‹ Volver'),
+      el('h1', {}, state.currentForm ? state.currentForm.name : ''),
+      el('span', {class:'spacer'}),
+    ]));
+    const main = el('main', {});
+    for (let i=0;i<3;i++) main.appendChild(el('div', {class:'skel'}));
+    w.appendChild(main);
+    return w;
+  }
+
+  if (!state.currentForm.sections.length){
+    w.appendChild(el('header', {class:'topbar'}, [
+      el('button', {class:'back', onclick: ()=>{ state.screen='list'; render(); }}, '‹ Volver'),
+      el('h1', {}, state.currentForm ? state.currentForm.name : ''),
+      el('span', {class:'spacer'}),
+    ]));
+    const main = el('main', {});
+    main.appendChild(el('div', {class:'empty-state'}, [
+      el('div', {class:'big'}, '⚠️'),
+      el('p', {}, 'Este formulario no tiene preguntas configuradas, o no se pudieron leer desde el servidor.'),
+    ]));
+    w.appendChild(main);
+    return w;
+  }
+
+  const flat = flattenQuestions(state.currentForm.sections);
+  if (!state.qIndex) state.qIndex = 0;
+  if (state.qIndex >= flat.length) state.qIndex = flat.length - 1;
+  const total = flat.length;
+  const idx = state.qIndex;
+  const { q, sectionName, isFirstOfSection } = flat[idx];
+  const isLast = idx === total - 1;
+
+  // --- Barra superior: volver a la lista + progreso ---
+  w.appendChild(el('header', {class:'topbar'}, [
+    el('button', {class:'back', onclick: ()=>{ state.screen='list'; state.qIndex=0; render(); }}, '‹ Salir'),
+    el('h1', {}, (idx+1) + ' / ' + total),
+    el('span', {class:'spacer'}),
+  ]));
+
+  const progressWrap = el('div', {class:'progress-wrap'});
+  const progressBar = el('div', {class:'progress-bar'});
+  progressBar.style.width = Math.round(((idx+1)/total)*100) + '%';
+  progressWrap.appendChild(progressBar);
+  w.appendChild(progressWrap);
+
+  // --- Tarjeta de la pregunta actual ---
+  const stage = el('div', {class:'q-stage'});
+  const card = el('div', {class:'q-card'});
+  if (sectionName && isFirstOfSection){
+    card.appendChild(el('div', {class:'section-title'}, sectionName));
+  }
+  card.appendChild(el('div', {class:'q-label big'}, [
+    stripTags(q.name), q.required ? el('span', {class:'q-req'}, '*') : null
+  ]));
+  if (q.description) card.appendChild(el('div', {class:'q-desc'}, stripTags(q.description)));
+  card.appendChild(renderQuestionInput(q));
+  stage.appendChild(card);
+  w.appendChild(stage);
+
+  // --- Navegación: flechas izquierda/derecha ---
+  function goNext(){
+    const ans = state.answers[q.id];
+    if (q.required && isAnswerEmpty(ans)){
+      toast('Esta pregunta es obligatoria');
+      return;
+    }
+    if (isLast){
+      doSubmit();
+      return;
+    }
+    state.qIndex = idx + 1;
+    render();
+  }
+  function goBack(){
+    if (idx === 0) return;
+    state.qIndex = idx - 1;
+    render();
+  }
+
+  async function doSubmit(){
+    state.submitting = true; render();
+    try{
+      if (state.demoMode){
+        await new Promise(r=>setTimeout(r, 700));
+        state.submitting = false;
+        state.screen = 'list';
+        state.qIndex = 0;
+        toast('Ticket creado en GLPI ✓ (demo)');
+      } else {
+        const { mode } = await submitForm(state.conn, state.currentForm, state.answers);
+        state.submitting = false;
+        state.screen = 'list';
+        state.qIndex = 0;
+        toast(mode === 'formcreator'
+          ? 'Formulario enviado y enlazado ✓'
+          : 'Ticket creado ✓ (no se pudo enlazar al formulario)');
+      }
+    }catch(e){
+      state.submitting = false;
+      toast('No se pudo enviar: ' + e.message);
+    }
+    render();
+  }
+
+  const navBar = el('div', {class:'card-nav'});
+  const leftBtn = el('button', {class:'nav-arrow left' + (idx===0?' disabled':''), type:'button', onclick: goBack}, '‹');
+  leftBtn.disabled = idx === 0 || state.submitting;
+  const rightBtn = el('button', {class:'nav-arrow right' + (state.submitting?' loading':''), type:'button', onclick: goNext},
+    state.submitting ? '…' : (isLast ? '✓' : '›'));
+  rightBtn.disabled = state.submitting;
+  navBar.appendChild(leftBtn);
+  navBar.appendChild(el('span', {class:'nav-hint'}, isLast ? (state.submitting ? 'Enviando…' : 'Toca para enviar') : 'Toca para continuar'));
+  navBar.appendChild(rightBtn);
+  w.appendChild(navBar);
+
+  return w;
+}
+
+function openSettings(){
+  resolveProfile(state.conn, true);
+}
+
+function logout(){
+  if (!confirm('¿Cerrar sesión y salir? Tendrás que volver a conectar con tu URL, App-Token, usuario y contraseña.')) return;
+  clearConn();
+  state.conn = null; state.sessionToken = null; state.demoMode = false;
+  state.currentUserId = null; state.profiles = [];
+  state.screen = 'login';
+  render();
+}
+
+/* --------------------------------- Boot ---------------------------------- */
+(async function boot(){
+  const saved = loadConn();
+  if (saved){
+    state.conn = saved;
+    try{
+      state.sessionToken = await initSession(saved);
+      await ensureCurrentUserId(saved);
+      await resolveProfile(saved, false);
+      if (state.screen === 'profile') return;
+      await goToList();
+      return;
+    }catch(e){ /* sesión inválida, vuelve a login */ }
+  }
+  render();
+})();
+
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
