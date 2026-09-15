@@ -31,7 +31,7 @@
     color:var(--ink);
     -webkit-font-smoothing:antialiased;
   }
-  #app{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;}
+  #app{max-width:520px;margin:0 auto;min-height:100%;min-height:100dvh;display:flex;flex-direction:column;}
 
   header.topbar{
     padding:18px 20px 14px;
@@ -141,12 +141,18 @@
     transition:width .25s ease;
   }
   .q-stage{
-    padding:calc(6vh + 10px) 20px 24px;
+    flex:1 1 auto;                 /* ocupa el espacio libre disponible */
+    display:flex;flex-direction:column;
+    padding:calc(3vh + 12px) 20px calc(96px + env(safe-area-inset-bottom));
   }
   .q-card{
     width:100%;background:var(--card);border:1px solid var(--line);border-radius:14px;
-    padding:24px 20px;box-shadow:0 12px 30px rgba(0,0,0,.28);
+    padding:22px 20px;box-shadow:0 12px 30px rgba(0,0,0,.28);
     animation:cardIn .22s ease;
+  }
+  /* Varias preguntas dentro de la misma tarjeta */
+  .q-item + .q-item{
+    margin-top:22px;padding-top:22px;border-top:1px solid var(--line);
   }
   @keyframes cardIn{
     from{opacity:0;transform:translateY(10px);}
@@ -154,20 +160,25 @@
   }
   .q-card .section-title{margin:0 0 14px;}
   .q-label.big{font-size:18px;font-weight:700;margin:0 0 8px;line-height:1.35;}
+  .q-card.multi .q-label.big{font-size:16px;}
   .q-card .q-desc{margin:0 0 16px;font-size:13px;}
 
   .card-nav{
-    position:sticky;bottom:0;background:var(--paper);
+    position:fixed;left:0;right:0;bottom:0;
+    max-width:520px;margin:0 auto;background:var(--paper);
     display:flex;align-items:center;justify-content:space-between;gap:14px;
     padding:14px 20px calc(18px + env(safe-area-inset-bottom));
     border-top:1px solid var(--line);
+    z-index:6;
   }
   .nav-hint{font-size:12px;color:var(--ink-soft);flex:1;text-align:center;}
   .nav-arrow{
-    width:52px;height:52px;border-radius:50%;border:none;flex:0 0 auto;
-    font-size:22px;font-weight:700;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
+    height:52px;min-width:100px;border-radius:14px;border:none;flex:0 0 auto;
+    font-size:15px;font-weight:700;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    padding:0 20px;
   }
+  .nav-arrow .ico{font-size:19px;line-height:1;}
   .nav-arrow.left{background:var(--card-2);color:var(--ink);border:1px solid var(--line);}
   .nav-arrow.left.disabled, .nav-arrow.left:disabled{opacity:.35;cursor:default;}
   .nav-arrow.right{
@@ -976,6 +987,113 @@ function flattenQuestions(sections){
   return flat;
 }
 
+function needsOwnCard(q){
+  // Preguntas "grandes" que se ven mal compartiendo tarjeta:
+  // texto largo y listas de opciones con muchas alternativas.
+  const type = (q.fieldtype || 'text').toLowerCase();
+  if (type === 'textarea') return true;
+  if (type.indexOf('radio') === 0 || type.indexOf('check') === 0){
+    return parseOptionList(q.values).length > 3;
+  }
+  return false;
+}
+
+let formPagesCache = null; // { formId, viewportKey, pages }
+
+function measureSectionTitleHeight(probeCard, name){
+  probeCard.innerHTML = '';
+  const t = el('div', {class:'section-title'}, name);
+  probeCard.appendChild(t);
+  return t.getBoundingClientRect().height;
+}
+
+function measureItemHeight(probeCard, q){
+  probeCard.innerHTML = '';
+  const block = el('div', {class:'q-item'});
+  block.appendChild(el('div', {class:'q-label big'}, [
+    stripTags(q.name), q.required ? el('span', {class:'q-req'}, '*') : null
+  ]));
+  if (q.description) block.appendChild(el('div', {class:'q-desc'}, stripTags(q.description)));
+  block.appendChild(renderQuestionInput(q));
+  probeCard.appendChild(block);
+  return block.getBoundingClientRect().height;
+}
+
+function computeFormPages(form){
+  // Arma las tarjetas midiendo, en el propio navegador, cuánta altura real
+  // hay disponible (viewport menos header/progreso/nav) y cuánto mide cada
+  // pregunta ya renderizada, en vez de asumir un número fijo por tarjeta.
+  const flat = flattenQuestions(form.sections);
+  if (!flat.length) return [];
+
+  const probeWrap = document.createElement('div');
+  probeWrap.style.cssText = 'position:fixed;left:-9999px;top:0;visibility:hidden;pointer-events:none;';
+  probeWrap.style.width = Math.min(window.innerWidth, 520) + 'px';
+  document.body.appendChild(probeWrap);
+
+  const header = el('header', {class:'topbar'}, [
+    el('button', {class:'back'}, '‹ Salir'), el('h1', {}, '1 / 1'), el('span', {class:'spacer'})
+  ]);
+  const progressWrap = el('div', {class:'progress-wrap'});
+  progressWrap.appendChild(el('div', {class:'progress-bar'}));
+  const stage = el('div', {class:'q-stage'});
+  const probeCard = el('div', {class:'q-card'});
+  stage.appendChild(probeCard);
+  const navBar = el('div', {class:'card-nav'});
+  navBar.style.position = 'static';
+  navBar.appendChild(el('button', {class:'nav-arrow left'}, [el('span',{class:'ico'},'‹'), 'Atrás']));
+  navBar.appendChild(el('span', {class:'nav-hint'}, 'Toca para continuar'));
+  navBar.appendChild(el('button', {class:'nav-arrow right'}, ['Siguiente', el('span',{class:'ico'},'›')]));
+  probeWrap.appendChild(header);
+  probeWrap.appendChild(progressWrap);
+  probeWrap.appendChild(stage);
+  probeWrap.appendChild(navBar);
+
+  const headerH = header.getBoundingClientRect().height;
+  const progressH = progressWrap.getBoundingClientRect().height;
+  const navH = navBar.getBoundingClientRect().height;
+  const stagePadTop = parseFloat(getComputedStyle(stage).paddingTop) || 0;
+  const cardStyle = getComputedStyle(probeCard);
+  const cardPadV = (parseFloat(cardStyle.paddingTop) || 0) + (parseFloat(cardStyle.paddingBottom) || 0);
+
+  let budget = window.innerHeight - headerH - progressH - navH - stagePadTop - cardPadV - 8;
+  if (budget < 80) budget = 80; // salvaguarda: pantallas muy chicas siempre muestran al menos 1 pregunta
+
+  const DIVIDER_H = 45; // margin-top 22 + padding-top 22 + border 1px entre preguntas de una misma tarjeta
+
+  const pages = [];
+  let cur = [];
+  let curH = 0;
+  const flush = ()=>{ if (cur.length){ pages.push(cur); cur = []; curH = 0; } };
+
+  flat.forEach(item=>{
+    if (item.isFirstOfSection) flush();
+    const big = needsOwnCard(item.q);
+    const itemH = measureItemHeight(probeCard, item.q);
+
+    if (big){ flush(); pages.push([item]); return; }
+
+    const titleH = (cur.length === 0 && item.isFirstOfSection)
+      ? measureSectionTitleHeight(probeCard, item.sectionName) : 0;
+    const dividerH = cur.length > 0 ? DIVIDER_H : 0;
+    const projected = curH + dividerH + titleH + itemH;
+
+    if (cur.length > 0 && projected > budget){
+      flush();
+      const titleH2 = item.isFirstOfSection ? measureSectionTitleHeight(probeCard, item.sectionName) : 0;
+      cur.push(item);
+      curH = titleH2 + itemH;
+    } else {
+      cur.push(item);
+      curH = projected;
+    }
+  });
+  flush();
+
+  document.body.removeChild(probeWrap);
+  return pages;
+}
+
 function isAnswerEmpty(ans){
   return ans === undefined || ans === null || ans === '' ||
     (Array.isArray(ans) && ans.length === 0);
@@ -1012,11 +1130,18 @@ function renderForm(){
   }
 
   const flat = flattenQuestions(state.currentForm.sections);
+  const viewportKey = window.innerWidth + 'x' + window.innerHeight;
+  if (!formPagesCache || formPagesCache.formId !== state.currentForm.id || formPagesCache.viewportKey !== viewportKey){
+    formPagesCache = { formId: state.currentForm.id, viewportKey, pages: computeFormPages(state.currentForm) };
+  }
+  const pages = formPagesCache.pages;
   if (!state.qIndex) state.qIndex = 0;
-  if (state.qIndex >= flat.length) state.qIndex = flat.length - 1;
-  const total = flat.length;
+  if (state.qIndex >= pages.length) state.qIndex = pages.length - 1;
+  const total = pages.length;
   const idx = state.qIndex;
-  const { q, sectionName, isFirstOfSection } = flat[idx];
+  const items = pages[idx];
+  const sectionName = items[0].sectionName;
+  const showSectionTitle = items[0].isFirstOfSection;
   const isLast = idx === total - 1;
 
   // --- Barra superior: volver a la lista + progreso ---
@@ -1034,23 +1159,29 @@ function renderForm(){
 
   // --- Tarjeta de la pregunta actual ---
   const stage = el('div', {class:'q-stage'});
-  const card = el('div', {class:'q-card'});
-  if (sectionName && isFirstOfSection){
+  const card = el('div', {class:'q-card' + (items.length > 1 ? ' multi' : '')});
+  if (sectionName && showSectionTitle){
     card.appendChild(el('div', {class:'section-title'}, sectionName));
   }
-  card.appendChild(el('div', {class:'q-label big'}, [
-    stripTags(q.name), q.required ? el('span', {class:'q-req'}, '*') : null
-  ]));
-  if (q.description) card.appendChild(el('div', {class:'q-desc'}, stripTags(q.description)));
-  card.appendChild(renderQuestionInput(q));
+  items.forEach(({ q })=>{
+    const block = el('div', {class:'q-item'});
+    block.appendChild(el('div', {class:'q-label big'}, [
+      stripTags(q.name), q.required ? el('span', {class:'q-req'}, '*') : null
+    ]));
+    if (q.description) block.appendChild(el('div', {class:'q-desc'}, stripTags(q.description)));
+    block.appendChild(renderQuestionInput(q));
+    card.appendChild(block);
+  });
   stage.appendChild(card);
   w.appendChild(stage);
 
   // --- Navegación: flechas izquierda/derecha ---
   function goNext(){
-    const ans = state.answers[q.id];
-    if (q.required && isAnswerEmpty(ans)){
-      toast('Esta pregunta es obligatoria');
+    const missing = items.filter(({ q }) => q.required && isAnswerEmpty(state.answers[q.id]));
+    if (missing.length){
+      toast(missing.length > 1
+        ? 'Faltan respuestas obligatorias'
+        : 'Falta responder: ' + stripTags(missing[0].q.name));
       return;
     }
     if (isLast){
@@ -1092,10 +1223,16 @@ function renderForm(){
   }
 
   const navBar = el('div', {class:'card-nav'});
-  const leftBtn = el('button', {class:'nav-arrow left' + (idx===0?' disabled':''), type:'button', onclick: goBack}, '‹');
+  const leftBtn = el('button', {class:'nav-arrow left' + (idx===0?' disabled':''), type:'button', onclick: goBack}, [
+    el('span', {class:'ico'}, '‹'), 'Atrás'
+  ]);
   leftBtn.disabled = idx === 0 || state.submitting;
   const rightBtn = el('button', {class:'nav-arrow right' + (state.submitting?' loading':''), type:'button', onclick: goNext},
-    state.submitting ? '…' : (isLast ? '✓' : '›'));
+    state.submitting
+      ? [ 'Enviando…' ]
+      : isLast
+        ? [ 'Enviar', el('span', {class:'ico'}, '✓') ]
+        : [ 'Siguiente', el('span', {class:'ico'}, '›') ]);
   rightBtn.disabled = state.submitting;
   navBar.appendChild(leftBtn);
   navBar.appendChild(el('span', {class:'nav-hint'}, isLast ? (state.submitting ? 'Enviando…' : 'Toca para enviar') : 'Toca para continuar'));
@@ -1134,6 +1271,17 @@ function logout(){
   }
   render();
 })();
+
+let resizeTimer = null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(()=>{
+    if (state.screen === 'form' && state.currentForm){
+      formPagesCache = null; // fuerza recalcular cuántas preguntas caben
+      render();
+    }
+  }, 200);
+});
 
 if ('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
