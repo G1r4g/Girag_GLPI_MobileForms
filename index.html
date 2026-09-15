@@ -1273,14 +1273,30 @@ function logout(){
 })();
 
 let resizeTimer = null;
+let lastViewportWidth = window.innerWidth;
 window.addEventListener('resize', ()=>{
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(()=>{
-    if (state.screen === 'form' && state.currentForm){
-      formPagesCache = null; // fuerza recalcular cuántas preguntas caben
-      render();
-    }
-  }, 200);
+    if (state.screen !== 'form' || !state.currentForm) return;
+
+    // En móvil, abrir el teclado achica innerHeight y dispara 'resize' aunque
+    // el usuario solo esté escribiendo. Si hay un campo enfocado, es el
+    // teclado (no un cambio real de pantalla): no repaginar ni re-renderizar,
+    // o entramos en un loop de foco→cierre de teclado→resize→foco perdido.
+    const active = document.activeElement;
+    const isTyping = active && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName);
+    if (isTyping) return;
+
+    // Fuera de eso, solo repaginamos si cambió el ANCHO real (giro de
+    // pantalla o redimensionar ventana). Cambios de alto sin cambio de
+    // ancho casi siempre son barras del navegador o el teclado cerrándose.
+    const width = window.innerWidth;
+    if (width === lastViewportWidth) return;
+    lastViewportWidth = width;
+
+    formPagesCache = null; // fuerza recalcular cuántas preguntas caben
+    render();
+  }, 250);
 });
 
 if ('serviceWorker' in navigator){
