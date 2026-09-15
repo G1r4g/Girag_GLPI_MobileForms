@@ -1,4 +1,4 @@
-# Formularios Girag — app PWA para GLPI + Formcreator
+# Girag_GLPI_MobileForms — app PWA para GLPI + Formcreator
 
 Prototipo funcional de una app web instalable (PWA) que muestra los formularios
 de Formcreator de GLPI y permite enviarlos como tickets, sin usar el navegador
